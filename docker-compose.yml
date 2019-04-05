@@ -1,0 +1,59 @@
+version: '3.1'
+services:
+
+    # Nginx.
+    web:
+        image: nginx:latest
+        ports:
+            - "80:80"
+        volumes:
+            - ./code:/code
+            - ./nginx/site.conf:/etc/nginx/conf.d/site.conf
+        links:
+            - php
+            - mariadb
+
+    # PHP.
+    php:
+        image: php:7.1-fpm
+        build:
+            context: ./php
+            dockerfile: Dockerfile
+        links:
+            - mariadb
+        volumes:
+            - ./code:/code
+            - ./php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+    
+    # MariaDb
+    mariadb:
+        image: mariadb:10.3
+        command: 'mysqld --innodb-flush-method=fsync'
+        restart: unless-stopped
+        volumes:
+            - ./database/my.cnf:/etc/alternatives/my.cnf
+            #- ./database/conf/my.cnf:/etc/alternatives/my.cnf
+            #- DATA_SAVE_PATH=./database/data
+            - ./docker/mariadb:/docker-entrypoint-initdb.d/
+            - ./database:/var/lib/mysql
+        environment:
+            MYSQL_USER: user
+            MYSQL_PASSWORD: root
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - "3306:3306"
+    
+    # MySql.
+    #db:
+        #image: mysql
+        #command: --default-authentication-plugin=mysql_native_password
+        #restart: always
+        #environment:
+            #MYSQL_USER: root
+            #MYSQL_PASSWORD: root
+            #MYSQL_ROOT_PASSWORD: root
+        #volumes:
+            #- ./database:/var/lib/mysql
+            #- DATA_SAVE_PATH=./database/data
+        #ports:
+          #- "3306:3306"       
